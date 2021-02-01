@@ -187,6 +187,30 @@ variable "master_locations" {
   }))
 }
 
+variable "maintenance_policy_auto_upgrade" {
+  description = <<-EOF
+  Boolean flag that specifies if master can be upgraded automatically. When 
+  omitted, default value is TRUE.
+  EOF
+
+  type = bool
+
+  default = true
+}
+
+variable "maintenance_windows" {
+  description = <<-EOF
+  This structure specifies maintenance window, when update for master is allowed. 
+  When omitted, it defaults to any time. To specify time of day interval, for all 
+  days, one element should be provided, with two fields set, start_time and duration. 
+  Please see zonal_cluster_resource_name config example.
+  EOF
+
+  type = list(map(string))
+
+  default = []
+}
+
 variable "node_groups" {
   description = "Parameters of Kubernetes node groups."
 
