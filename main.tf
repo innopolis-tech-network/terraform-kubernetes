@@ -176,16 +176,16 @@ resource "yandex_kubernetes_node_group" "node_groups" {
   }
   
   maintenance_policy {
-    auto_upgrade = lookup(each.value, "platform_id", true)
-    auto_repair  = lookup(each.value, "auto_repair", true)
+    auto_upgrade = lookup(each.value, "maintenance_policy_auto_upgrade", true)
+    auto_repair  = lookup(each.value, "maintenance_policy_auto_repair", true)
     
     dynamic "maintenance_window" {
       for_each = flatten([lookup(each.value, "maintenance_windows", [])])
 
       content {
-        day        = each.value.value.day
-        start_time = each.value.value.start_time
-        duration   = each.value.value.duration
+        day        = maintenance_window.value["day"]
+        start_time = maintenance_window.value["start_time"]
+        duration   = maintenance_window.value["duration"]
       }
     }
   }
