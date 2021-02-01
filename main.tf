@@ -104,6 +104,20 @@ resource "yandex_kubernetes_cluster" "cluster" {
         }
       }
     }
+    
+    maintenance_policy {
+      auto_upgrade = lookup(each.value, "maintenance_policy_auto_upgrade", true)
+
+      dynamic "maintenance_window" {
+        for_each = flatten([lookup(each.value, "maintenance_windows", [])])
+
+        content {
+          day        = maintenance_window.value["day"]
+          start_time = maintenance_window.value["start_time"]
+          duration   = maintenance_window.value["duration"]
+        }
+      }
+    }
   }
 
   network_policy_provider = var.network_policy_provider
