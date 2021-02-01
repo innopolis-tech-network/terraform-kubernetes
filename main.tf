@@ -104,17 +104,21 @@ resource "yandex_kubernetes_cluster" "cluster" {
         }
       }
     }
-    
-    maintenance_policy {
-      auto_upgrade = lookup(var, "maintenance_policy_auto_upgrade", true)
 
-      dynamic "maintenance_window" {
-        for_each = flatten([lookup(var, "maintenance_windows", [])])
+    dynamic "maintenance_policy" {
+      for_each = [var.maintenance_policy]
+      
+      content {
+        auto_upgrade = maintenance_policy.value.auto_upgrade
 
-        content {
-          day        = maintenance_window.value["day"]
-          start_time = maintenance_window.value["start_time"]
-          duration   = maintenance_window.value["duration"]
+        dynamic "maintenance_window" {
+          for_each = flatten([lookup(maintenance_policy.value, "maintenance_windows", [])])
+
+          content {
+            day        = maintenance_window.value.day
+            start_time = maintenance_window.value.start_time
+            duration   = maintenance_window.value.duration
+          }
         }
       }
     }
@@ -133,13 +137,20 @@ resource "yandex_kubernetes_cluster" "cluster" {
   // to keep permissions of service account on destroy
   // until cluster will be destroyed
   depends_on = [yandex_resourcemanager_folder_iam_binding.service_account]
+
+  // To avoid destroying the resource
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "yandex_kubernetes_node_group" "node_groups" {
   for_each = var.node_groups
 
   cluster_id  = yandex_kubernetes_cluster.cluster.id
-  name        = each.key
+  // To use lifecycle create_before_destroy the name must not be set
+  // therwise you will get error 'Node group with name default already exists in folder'
+  name        = lookup(each.value, "name", null)
   description = lookup(each.value, "description", null)
   labels      = lookup(each.value, "labels", null)
   version     = lookup(each.value, "version", var.master_version)
@@ -189,17 +200,21 @@ resource "yandex_kubernetes_node_group" "node_groups" {
     }
   }
   
-  maintenance_policy {
-    auto_upgrade = lookup(each.value, "maintenance_policy_auto_upgrade", true)
-    auto_repair  = lookup(each.value, "maintenance_policy_auto_repair", true)
+  dynamic "maintenance_policy" {
+    for_each = flatten([lookup(each.value, "maintenance_policy", [{ auto_upgrade = true, auto_repair = true }])])
     
-    dynamic "maintenance_window" {
-      for_each = flatten([lookup(each.value, "maintenance_windows", [])])
+    content {
+      auto_upgrade = maintenance_policy.value.auto_upgrade
+      auto_repair  = maintenance_policy.value.auto_repair
 
-      content {
-        day        = maintenance_window.value["day"]
-        start_time = maintenance_window.value["start_time"]
-        duration   = maintenance_window.value["duration"]
+      dynamic "maintenance_window" {
+        for_each = flatten([lookup(maintenance_policy.value, "maintenance_windows", [])])
+
+        content {
+          day        = maintenance_window.value.day
+          start_time = maintenance_window.value.start_time
+          duration   = maintenance_window.value.duration
+        }
       }
     }
   }
@@ -208,7 +223,7 @@ resource "yandex_kubernetes_node_group" "node_groups" {
     for_each = flatten([lookup(each.value, "deploy_policy", [])])
 
     content {
-      max_expansion = deploy_policy.value.max_expansion
+      max_expansion   = deploy_policy.value.max_expansion
       max_unavailable = deploy_policy.value.max_unavailable
     }
   }
@@ -222,5 +237,9 @@ resource "yandex_kubernetes_node_group" "node_groups" {
         subnet_id = location.value.subnet_id
       }
     }
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
