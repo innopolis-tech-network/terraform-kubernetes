@@ -174,6 +174,17 @@ resource "yandex_kubernetes_node_group" "node_groups" {
       }
     }
   }
+  
+  deploy_policy {
+    dynamic "deploy_policy" {
+      for_each = flatten([lookup(each.value, "deploy_policy", [])])
+
+      content {
+        max_expansion = deploy_policy.value.max_expansion
+        max_unavailable = deploy_policy.value.max_unavailable
+      }
+    }
+  }
 
   allocation_policy {
     dynamic "location" {
