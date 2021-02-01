@@ -106,10 +106,10 @@ resource "yandex_kubernetes_cluster" "cluster" {
     }
     
     maintenance_policy {
-      auto_upgrade = lookup(each.value, "maintenance_policy_auto_upgrade", true)
+      auto_upgrade = lookup(var, "maintenance_policy_auto_upgrade", true)
 
       dynamic "maintenance_window" {
-        for_each = flatten([lookup(each.value, "maintenance_windows", [])])
+        for_each = flatten([lookup(var, "maintenance_windows", [])])
 
         content {
           day        = maintenance_window.value["day"]
