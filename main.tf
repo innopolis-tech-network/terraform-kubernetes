@@ -175,6 +175,21 @@ resource "yandex_kubernetes_node_group" "node_groups" {
     }
   }
   
+  maintenance_policy {
+    auto_upgrade = lookup(each.value, "platform_id", true)
+    auto_repair  = lookup(each.value, "auto_repair", true)
+    
+    dynamic "maintenance_window" {
+      for_each = flatten([lookup(each.value, "maintenance_windows", [])])
+
+      content {
+        day        = each.value.value.day
+        start_time = each.value.value.start_time
+        duration   = each.value.value.duration
+      }
+    }
+  }
+  
   dynamic "deploy_policy" {
     for_each = flatten([lookup(each.value, "deploy_policy", [])])
 
