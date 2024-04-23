@@ -79,7 +79,7 @@ resource "yandex_kubernetes_cluster" "cluster" {
     version   = var.master_version
     public_ip = var.master_public_ip
 
-    dynamic "zonal" {
+    dynamic "master_location" {
       for_each = local.master_locations
 
       content {
