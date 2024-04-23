@@ -140,7 +140,7 @@ resource "yandex_kubernetes_cluster" "cluster" {
 
   // To avoid destroying the resource
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
 
